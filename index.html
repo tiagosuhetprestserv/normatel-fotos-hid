@@ -92,41 +92,87 @@
       iniciarCamera();
     }
 
+
+
     function tirarFoto() {
-      if (!video.videoWidth || !video.videoHeight) {
-        alert("Câmera ainda não está pronta. Tente novamente.");
-        return;
-      }
+  if (!video.videoWidth || !video.videoHeight) {
+    alert("Câmera ainda não está pronta. Tente novamente.");
+    return;
+  }
 
-      navigator.geolocation.getCurrentPosition(pos => {
-        const latitude = pos.coords.latitude.toFixed(6);
-        const longitude = pos.coords.longitude.toFixed(6);
-        localizacao.textContent = `📍 Localização: ${latitude}, ${longitude}`;
+  // Limpar canvas antes de desenhar
+  const ctx = canvas.getContext('2d');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        const ctx = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  // Capturar localização atual
+  navigator.geolocation.getCurrentPosition(pos => {
+    const latitude = pos.coords.latitude.toFixed(6);
+    const longitude = pos.coords.longitude.toFixed(6);
+    localizacao.textContent = `📍 Localização: ${latitude}, ${longitude}`;
 
-        const agora = new Date();
-        const dataHora = agora.toLocaleString('pt-BR');
+    const agora = new Date();
+    const dataHora = agora.toLocaleString('pt-BR');
 
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "yellow";
-        let y = canvas.height - 60;
-        ctx.fillText(`Lat: ${latitude}`, 10, y);
-        ctx.fillText(`Lng: ${longitude}`, 10, y + 25);
-        ctx.fillText(`🕒 ${dataHora}`, 10, y + 50);
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "yellow";
+    let y = canvas.height - 60;
+    ctx.fillText(`Lat: ${latitude}`, 10, y);
+    ctx.fillText(`Lng: ${longitude}`, 10, y + 25);
+    ctx.fillText(`🕒 ${dataHora}`, 10, y + 50);
 
-        const imagem = canvas.toDataURL("image/png");
-        downloadLink.href = imagem;
-        downloadLink.download = `foto_${dataHora.replace(/[\/: ]/g, "_")}.png`;
-        downloadLink.textContent = "⬇️ Baixar Foto";
-        downloadLink.style.display = 'inline-block';
-      }, err => {
-        alert("Erro ao obter localização: " + err.message);
-      });
-    }
+    const imagem = canvas.toDataURL("image/png");
+    downloadLink.href = imagem;
+    downloadLink.download = `foto_${dataHora.replace(/[\/: ]/g, "_")}.png`;
+    downloadLink.textContent = "⬇️ Baixar Foto";
+    downloadLink.style.display = 'inline-block';
+  }, err => {
+    alert("Erro ao obter localização: " + err.message);
+  });
+}
+
+
+    
+
+
+
+    // function tirarFoto() {
+    //   if (!video.videoWidth || !video.videoHeight) {
+    //     alert("Câmera ainda não está pronta. Tente novamente.");
+    //     return;
+    //   }
+
+    //   navigator.geolocation.getCurrentPosition(pos => {
+    //     const latitude = pos.coords.latitude.toFixed(6);
+    //     const longitude = pos.coords.longitude.toFixed(6);
+    //     localizacao.textContent = `📍 Localização: ${latitude}, ${longitude}`;
+
+    //     const ctx = canvas.getContext('2d');
+    //     canvas.width = video.videoWidth;
+    //     canvas.height = video.videoHeight;
+    //     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    //     const agora = new Date();
+    //     const dataHora = agora.toLocaleString('pt-BR');
+
+    //     ctx.font = "20px Arial";
+    //     ctx.fillStyle = "yellow";
+    //     let y = canvas.height - 60;
+    //     ctx.fillText(`Lat: ${latitude}`, 10, y);
+    //     ctx.fillText(`Lng: ${longitude}`, 10, y + 25);
+    //     ctx.fillText(`🕒 ${dataHora}`, 10, y + 50);
+
+    //     const imagem = canvas.toDataURL("image/png");
+    //     downloadLink.href = imagem;
+    //     downloadLink.download = `foto_${dataHora.replace(/[\/: ]/g, "_")}.png`;
+    //     downloadLink.textContent = "⬇️ Baixar Foto";
+    //     downloadLink.style.display = 'inline-block';
+    //   }, err => {
+    //     alert("Erro ao obter localização: " + err.message);
+    //   });
+    // }
 
     iniciarCamera();
   </script>
