@@ -4,17 +4,53 @@
   <meta charset="UTF-8">
   <title>Foto com GPS, Data e Troca de Câmera</title>
   <style>
-    video, canvas { width: 100%; max-width: 400px; }
-    button, a { margin-top: 10px; display: block; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 10px;
+    }
+    video, canvas {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 8px;
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button, a {
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #0078D4;
+      color: white;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    button:hover, a:hover {
+      background-color: #005A9E;
+    }
+    #localizacao {
+      margin-top: 15px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
-  <h2>Captura de Foto com Localização, Data e Troca de Câmera</h2>
-  <video id="video" autoplay></video>
-  <button onclick="trocarCamera()">🔄 Trocar Câmera</button>
-  <button onclick="tirarFoto()">📸 Tirar Foto</button>
+  <h2>Captura de Evidência com GPS e Data</h2>
+  <video id="video" autoplay playsinline></video>
+
+  <div class="controls">
+    <button onclick="trocarCamera()">🔄 Trocar Câmera</button>
+    <button onclick="tirarFoto()">📸 Tirar Foto</button>
+    <a id="downloadLink" style="display:none;">⬇️ Baixar Foto</a>
+  </div>
+
   <canvas id="canvas"></canvas>
-  <a id="downloadLink" style="display:none;">⬇️ Baixar Foto</a>
   <p id="localizacao">📍 Localização: (aguardando...)</p>
 
   <script>
@@ -39,6 +75,13 @@
       try {
         streamAtual = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = streamAtual;
+
+        await new Promise(resolve => {
+          video.onloadedmetadata = () => {
+            video.play();
+            resolve();
+          };
+        });
       } catch (err) {
         alert("Erro ao acessar câmera: " + err);
       }
@@ -50,6 +93,11 @@
     }
 
     function tirarFoto() {
+      if (!video.videoWidth || !video.videoHeight) {
+        alert("Câmera ainda não está pronta. Tente novamente.");
+        return;
+      }
+
       navigator.geolocation.getCurrentPosition(pos => {
         const latitude = pos.coords.latitude.toFixed(6);
         const longitude = pos.coords.longitude.toFixed(6);
@@ -74,7 +122,7 @@
         downloadLink.href = imagem;
         downloadLink.download = `foto_${dataHora.replace(/[\/: ]/g, "_")}.png`;
         downloadLink.textContent = "⬇️ Baixar Foto";
-        downloadLink.style.display = 'block';
+        downloadLink.style.display = 'inline-block';
       }, err => {
         alert("Erro ao obter localização: " + err.message);
       });
