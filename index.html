@@ -2,18 +2,19 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Foto com GPS e Data</title>
+  <title>Foto com GPS, Data e Troca de Câmera</title>
   <style>
     video, canvas { width: 100%; max-width: 400px; }
     button { margin-top: 10px; display: block; }
   </style>
 </head>
 <body>
-  <h2>Captura de Foto com Localização e Data</h2>
+  <h2>Captura de Foto com Localização, Data e Troca de Câmera</h2>
   <video id="video" autoplay></video>
+  <button onclick="trocarCamera()">🔄 Trocar Câmera</button>
   <button onclick="tirarFoto()">📸 Tirar Foto</button>
   <canvas id="canvas"></canvas>
-  <a id="downloadBtn" style="display:none;">⬇️ Baixar Foto</a>
+  <button id="downloadBtn" style="display:none;">⬇️ Baixar Foto</button>
   <p id="localizacao">📍 Localização: (aguardando...)</p>
 
   <script>
@@ -23,11 +24,34 @@
     const downloadBtn = document.getElementById('downloadBtn');
     let latitude = null;
     let longitude = null;
+    let usandoFrontal = true;
+    let streamAtual = null;
 
-    // Acessar câmera
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => video.srcObject = stream)
-      .catch(err => alert("Erro ao acessar câmera: " + err));
+    // Função para iniciar a câmera
+    async function iniciarCamera() {
+      if (streamAtual) {
+        streamAtual.getTracks().forEach(track => track.stop());
+      }
+
+      const constraints = {
+        video: {
+          facingMode: usandoFrontal ? "user" : "environment"
+        }
+      };
+
+      try {
+        streamAtual = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = streamAtual;
+      } catch (err) {
+        alert("Erro ao acessar câmera: " + err);
+      }
+    }
+
+    // Trocar entre frontal e traseira
+    function trocarCamera() {
+      usandoFrontal = !usandoFrontal;
+      iniciarCamera();
+    }
 
     // Capturar localização
     navigator.geolocation.getCurrentPosition(pos => {
@@ -45,11 +69,9 @@
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Obter data e hora atual
       const agora = new Date();
       const dataHora = agora.toLocaleString('pt-BR');
 
-      // Adicionar texto na imagem
       ctx.font = "20px Arial";
       ctx.fillStyle = "yellow";
       let y = canvas.height - 60;
@@ -59,12 +81,14 @@
       }
       ctx.fillText(`🕒 ${dataHora}`, 10, y + 50);
 
-      // Mostrar botão de download
       downloadBtn.style.display = 'block';
       const imagem = canvas.toDataURL("image/png");
       downloadBtn.href = imagem;
       downloadBtn.download = `foto_${dataHora.replace(/[\/: ]/g, "_")}.png`;
     }
+
+    // Iniciar com câmera frontal
+    iniciarCamera();
   </script>
 </body>
 </html>
