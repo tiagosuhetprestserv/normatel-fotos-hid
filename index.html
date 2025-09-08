@@ -55,117 +55,122 @@
   <p id="localizacao">📍 Localização: (aguardando...)</p>
   <p id="infoTexto" style="display:none;"></p>
 
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const localizacao = document.getElementById('localizacao');
-    const infoTexto = document.getElementById('infoTexto');
-    const downloadLink = document.getElementById('downloadLink');
-    const shareBtn = document.getElementById('shareBtn');
-    let usandoFrontal = true;
-    let streamAtual = null;
+ <script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const localizacao = document.getElementById('localizacao');
+  const infoTexto = document.getElementById('infoTexto');
+  const downloadLink = document.getElementById('downloadLink');
+  const shareBtn = document.getElementById('shareBtn');
+  let usandoFrontal = true;
+  let streamAtual = null;
 
-    async function iniciarCamera() {
-      if (streamAtual) {
-        streamAtual.getTracks().forEach(track => track.stop());
-      }
+  // Variáveis globais para legenda
+  let latitudeGlobal = "";
+  let longitudeGlobal = "";
+  let dataHoraGlobal = "";
 
-      const constraints = {
-        video: {
-          facingMode: usandoFrontal ? "user" : "environment"
-        }
-      };
-
-      try {
-        streamAtual = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = streamAtual;
-
-        await new Promise(resolve => {
-          video.onloadedmetadata = () => {
-            video.play();
-            resolve();
-          };
-        });
-      } catch (err) {
-        alert("Erro ao acessar câmera: " + err);
-      }
+  async function iniciarCamera() {
+    if (streamAtual) {
+      streamAtual.getTracks().forEach(track => track.stop());
     }
 
-    function trocarCamera() {
-      usandoFrontal = !usandoFrontal;
-      iniciarCamera();
-    }
-
-    function tirarFoto() {
-      if (!video.videoWidth || !video.videoHeight) {
-        alert("Câmera ainda não está pronta. Tente novamente.");
-        return;
+    const constraints = {
+      video: {
+        facingMode: usandoFrontal ? "user" : "environment"
       }
+    };
 
-      const ctx = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    try {
+      streamAtual = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = streamAtual;
 
-      navigator.geolocation.getCurrentPosition(pos => {
-        const latitude = pos.coords.latitude.toFixed(6);
-        const longitude = pos.coords.longitude.toFixed(6);
-        const agora = new Date();
-        const dataHora = agora.toLocaleString('pt-BR');
-
-        localizacao.textContent = `📍 Localização: ${latitude}, ${longitude}`;
-
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "yellow";
-        let y = canvas.height - 60;
-        ctx.fillText(`Lat: ${latitude}`, 10, y);
-        ctx.fillText(`Lng: ${longitude}`, 10, y + 25);
-        ctx.fillText(`🕒 ${dataHora}`, 10, y + 50);
-
-        const imagem = canvas.toDataURL("image/png");
-        downloadLink.href = imagem;
-        downloadLink.download = `foto_${dataHora.replace(/[\/: ]/g, "_")}.png`;
-        downloadLink.textContent = "⬇️ Baixar Foto";
-        downloadLink.style.display = 'inline-block';
-
-        shareBtn.style.display = 'inline-block';
-
-        infoTexto.innerHTML = `
-          <strong>📍 Localização:</strong> ${latitude}, ${longitude}<br>
-          <strong>🕒 Data e Hora:</strong> ${dataHora}
-        `;
-        infoTexto.style.display = 'block';
-      }, err => {
-        alert("Erro ao obter localização: " + err.message);
+      await new Promise(resolve => {
+        video.onloadedmetadata = () => {
+          video.play();
+          resolve();
+        };
       });
+    } catch (err) {
+      alert("Erro ao acessar câmera: " + err);
     }
+  }
 
-    function compartilharFoto() {
-      canvas.toBlob(async blob => {
-        const agora = new Date();
-        const dataHora = agora.toLocaleString('pt-BR').replace(/[\/: ]/g, "_");
-        const file = new File([blob], `foto_${dataHora}.png`, { type: "image/png" });
-
-        const texto = infoTexto.innerText;
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              title: "Evidência com GPS",
-              text: texto,
-              files: [file]
-            });
-          } catch (err) {
-            alert("Erro ao compartilhar: " + err);
-          }
-        } else {
-          alert("Compartilhamento com arquivos não é suportado neste navegador. Baixe a imagem e compartilhe manualmente.");
-        }
-      }, 'image/png');
-    }
-
+  function trocarCamera() {
+    usandoFrontal = !usandoFrontal;
     iniciarCamera();
+  }
+
+  function tirarFoto() {
+    if (!video.videoWidth || !video.videoHeight) {
+      alert("Câmera ainda não está pronta. Tente novamente.");
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    navigator.geolocation.getCurrentPosition(pos => {
+      latitudeGlobal = pos.coords.latitude.toFixed(6);
+      longitudeGlobal = pos.coords.longitude.toFixed(6);
+      const agora = new Date();
+      dataHoraGlobal = agora.toLocaleString('pt-BR');
+
+      localizacao.textContent = `📍 Localização: ${latitudeGlobal}, ${longitudeGlobal}`;
+
+      ctx.font = "20px Arial";
+      ctx.fillStyle = "yellow";
+      let y = canvas.height - 60;
+      ctx.fillText(`Lat: ${latitudeGlobal}`, 10, y);
+      ctx.fillText(`Lng: ${longitudeGlobal}`, 10, y + 25);
+      ctx.fillText(`🕒 ${dataHoraGlobal}`, 10, y + 50);
+
+      const imagem = canvas.toDataURL("image/png");
+      downloadLink.href = imagem;
+      downloadLink.download = `foto_${dataHoraGlobal.replace(/[\/: ]/g, "_")}.png`;
+      downloadLink.textContent = "⬇️ Baixar Foto";
+      downloadLink.style.display = 'inline-block';
+
+      shareBtn.style.display = 'inline-block';
+
+      infoTexto.innerHTML = `
+        <strong>📍 Localização:</strong> ${latitudeGlobal}, ${longitudeGlobal}<br>
+        <strong>🕒 Data e Hora:</strong> ${dataHoraGlobal}
+      `;
+      infoTexto.style.display = 'block';
+    }, err => {
+      alert("Erro ao obter localização: " + err.message);
+    });
+  }
+
+  function compartilharFoto() {
+    canvas.toBlob(async blob => {
+      const file = new File([blob], `foto_${dataHoraGlobal.replace(/[\/: ]/g, "_")}.png`, { type: "image/png" });
+
+      const texto = `📍 Localização: ${latitudeGlobal}, ${longitudeGlobal}\n🕒 Data e Hora: ${dataHoraGlobal}`;
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: "Evidência com GPS",
+            text: texto,
+            files: [file]
+          });
+        } catch (err) {
+          alert("Erro ao compartilhar: " + err);
+        }
+      } else {
+        alert("Compartilhamento com arquivos não é suportado neste navegador. Baixe a imagem e compartilhe manualmente.");
+      }
+    }, 'image/png');
+  }
+
+  iniciarCamera();
   </script>
+
 </body>
 </html>
+
