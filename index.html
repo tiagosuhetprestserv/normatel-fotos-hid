@@ -148,4 +148,16 @@
               text: texto,
               files: [file]
             });
-         
+          } catch (err) {
+            alert("Erro ao compartilhar: " + err);
+          }
+        } else {
+          alert("Compartilhamento com arquivos não é suportado neste navegador. Baixe a imagem e compartilhe manualmente.");
+        }
+      }, 'image/png');
+    }
+
+    iniciarCamera();
+  </script>
+</body>
+</html>
