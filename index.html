@@ -34,7 +34,7 @@
     button:hover, a:hover {
       background-color: #005A9E;
     }
-    #localizacao {
+    #localizacao, #infoTexto {
       margin-top: 15px;
       font-size: 14px;
     }
@@ -53,11 +53,13 @@
 
   <canvas id="canvas"></canvas>
   <p id="localizacao">📍 Localização: (aguardando...)</p>
+  <p id="infoTexto" style="display:none;"></p>
 
   <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const localizacao = document.getElementById('localizacao');
+    const infoTexto = document.getElementById('infoTexto');
     const downloadLink = document.getElementById('downloadLink');
     const shareBtn = document.getElementById('shareBtn');
     let usandoFrontal = true;
@@ -109,10 +111,10 @@
       navigator.geolocation.getCurrentPosition(pos => {
         const latitude = pos.coords.latitude.toFixed(6);
         const longitude = pos.coords.longitude.toFixed(6);
-        localizacao.textContent = `📍 Localização: ${latitude}, ${longitude}`;
-
         const agora = new Date();
         const dataHora = agora.toLocaleString('pt-BR');
+
+        localizacao.textContent = `📍 Localização: ${latitude}, ${longitude}`;
 
         ctx.font = "20px Arial";
         ctx.fillStyle = "yellow";
@@ -128,6 +130,13 @@
         downloadLink.style.display = 'inline-block';
 
         shareBtn.style.display = 'inline-block';
+
+        // Exibir informações como texto abaixo da imagem
+        infoTexto.innerHTML = `
+          <strong>📍 Localização:</strong> ${latitude}, ${longitude}<br>
+          <strong>🕒 Data e Hora:</strong> ${dataHora}
+        `;
+        infoTexto.style.display = 'block';
       }, err => {
         alert("Erro ao obter localização: " + err.message);
       });
