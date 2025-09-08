@@ -65,6 +65,8 @@
     let usandoFrontal = true;
     let streamAtual = null;
 
+    let dadosCompartilhamento = ""; // variável para armazenar texto completo
+
     async function iniciarCamera() {
       if (streamAtual) {
         streamAtual.getTracks().forEach(track => track.stop());
@@ -132,6 +134,7 @@
         shareBtn.style.display = 'inline-block';
 
         // Exibir informações como texto abaixo da imagem
+        dadosCompartilhamento = `📍 Localização: ${latitude}, ${longitude}\n🕒 Data e Hora: ${dataHora`;
         infoTexto.innerHTML = `
           <strong>📍 Localização:</strong> ${latitude}, ${longitude}<br>
           <strong>🕒 Data e Hora:</strong> ${dataHora}
@@ -148,13 +151,11 @@
         const dataHora = agora.toLocaleString('pt-BR').replace(/[\/: ]/g, "_");
         const file = new File([blob], `foto_${dataHora}.png`, { type: "image/png" });
 
-        const texto = localizacao.textContent + "\n🕒 " + agora.toLocaleString('pt-BR');
-
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               title: "Evidência com GPS",
-              text: texto,
+              text: dadosCompartilhamento,
               files: [file]
             });
           } catch (err) {
