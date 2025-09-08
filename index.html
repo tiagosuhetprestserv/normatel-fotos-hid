@@ -131,7 +131,6 @@
 
         shareBtn.style.display = 'inline-block';
 
-        // Exibir informações como texto abaixo da imagem
         infoTexto.innerHTML = `
           <strong>📍 Localização:</strong> ${latitude}, ${longitude}<br>
           <strong>🕒 Data e Hora:</strong> ${dataHora}
@@ -148,7 +147,7 @@
         const dataHora = agora.toLocaleString('pt-BR').replace(/[\/: ]/g, "_");
         const file = new File([blob], `foto_${dataHora}.png`, { type: "image/png" });
 
-        const texto = localizacao.textContent + "\n🕒 " + agora.toLocaleString('pt-BR');
+        const texto = infoTexto.innerText;
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
@@ -167,6 +166,4 @@
     }
 
     iniciarCamera();
-  </script>
-</body>
-</html>
+ 
