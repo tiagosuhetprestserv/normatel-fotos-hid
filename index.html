@@ -1,23 +1,151 @@
-function compartilharFoto() {
-  canvas.toBlob(async blob => {
-    const agora = new Date();
-    const dataHora = agora.toLocaleString('pt-BR').replace(/[\/: ]/g, "_");
-    const file = new File([blob], `foto_${dataHora}.png`, { type: "image/png" });
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Foto com GPS, Data e Troca de Câmera</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 10px;
+    }
+    video, canvas {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 8px;
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button, a {
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #0078D4;
+      color: white;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    button:hover, a:hover {
+      background-color: #005A9E;
+    }
+    #localizacao {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Captura de Evidência com GPS e Data</h2>
+  <video id="video" autoplay playsinline></video>
 
-    const texto = localizacao.textContent + "\n🕒 " + agora.toLocaleString('pt-BR');
+  <div class="controls">
+    <button onclick="trocarCamera()">🔄 Trocar Câmera</button>
+    <button onclick="tirarFoto()">📸 Tirar Foto</button>
+    <a id="downloadLink" style="display:none;">⬇️ Baixar Foto</a>
+    <button onclick="compartilharFoto()" id="shareBtn" style="display:none;">📤 Compartilhar</button>
+  </div>
 
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  <canvas id="canvas"></canvas>
+  <p id="localizacao">📍 Localização: (aguardando...)</p>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const localizacao = document.getElementById('localizacao');
+    const downloadLink = document.getElementById('downloadLink');
+    const shareBtn = document.getElementById('shareBtn');
+    let usandoFrontal = true;
+    let streamAtual = null;
+
+    async function iniciarCamera() {
+      if (streamAtual) {
+        streamAtual.getTracks().forEach(track => track.stop());
+      }
+
+      const constraints = {
+        video: {
+          facingMode: usandoFrontal ? "user" : "environment"
+        }
+      };
+
       try {
-        await navigator.share({
-          title: "Evidência com GPS",
-          text: texto,
-          files: [file]
+        streamAtual = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = streamAtual;
+
+        await new Promise(resolve => {
+          video.onloadedmetadata = () => {
+            video.play();
+            resolve();
+          };
         });
       } catch (err) {
-        alert("Erro ao compartilhar: " + err);
+        alert("Erro ao acessar câmera: " + err);
       }
-    } else {
-      alert("Compartilhamento com arquivos não é suportado neste navegador. Tente baixar a imagem e compartilhar manualmente.");
     }
-  }, 'image/png');
-}
+
+    function trocarCamera() {
+      usandoFrontal = !usandoFrontal;
+      iniciarCamera();
+    }
+
+    function tirarFoto() {
+      if (!video.videoWidth || !video.videoHeight) {
+        alert("Câmera ainda não está pronta. Tente novamente.");
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        const latitude = pos.coords.latitude.toFixed(6);
+        const longitude = pos.coords.longitude.toFixed(6);
+        localizacao.textContent = `📍 Localização: ${latitude}, ${longitude}`;
+
+        const agora = new Date();
+        const dataHora = agora.toLocaleString('pt-BR');
+
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "yellow";
+        let y = canvas.height - 60;
+        ctx.fillText(`Lat: ${latitude}`, 10, y);
+        ctx.fillText(`Lng: ${longitude}`, 10, y + 25);
+        ctx.fillText(`🕒 ${dataHora}`, 10, y + 50);
+
+        const imagem = canvas.toDataURL("image/png");
+        downloadLink.href = imagem;
+        downloadLink.download = `foto_${dataHora.replace(/[\/: ]/g, "_")}.png`;
+        downloadLink.textContent = "⬇️ Baixar Foto";
+        downloadLink.style.display = 'inline-block';
+
+        shareBtn.style.display = 'inline-block';
+      }, err => {
+        alert("Erro ao obter localização: " + err.message);
+      });
+    }
+
+    function compartilharFoto() {
+      canvas.toBlob(async blob => {
+        const agora = new Date();
+        const dataHora = agora.toLocaleString('pt-BR').replace(/[\/: ]/g, "_");
+        const file = new File([blob], `foto_${dataHora}.png`, { type: "image/png" });
+
+        const texto = localizacao.textContent + "\n🕒 " + agora.toLocaleString('pt-BR');
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: "Evidência com GPS",
+              text: texto,
+              files: [file]
+            });
+         
